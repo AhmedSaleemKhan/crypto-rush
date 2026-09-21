@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { formatEther } from 'ethers'
 import { useWeb3 } from '../context/Web3Context'
+import GarageViewer from '../components/game/GarageViewer'
+import { getSelectedCarId, setSelectedCarId } from '../game/carSelection'
 
 export default function Garage() {
   const { contract, account, connect, refreshBalance } = useWeb3()
   const [cars, setCars] = useState([])
   const [owned, setOwned] = useState({})
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelected] = useState(() => getSelectedCarId())
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState(null)
 
@@ -25,6 +27,20 @@ export default function Garage() {
   }, [contract, account])
 
   useEffect(() => { load() }, [load])
+
+  // Keep the selection valid once ownership data arrives — fall back to the
+  // free starter car if whatever was saved locally isn't actually owned.
+  useEffect(() => {
+    if (!cars.length || !account) return
+    const isOwned = selected === 0 || owned[selected]
+    if (!isOwned) selectCar(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cars, owned, account])
+
+  function selectCar(i) {
+    setSelected(i)
+    setSelectedCarId(i)
+  }
 
   async function buyCar(carId, price) {
     if (!contract) return
@@ -62,6 +78,7 @@ export default function Garage() {
   }
 
   const car = cars[selected]
+  const isEquipped = (i) => i === selected
 
   return (
     <div className="page garage">
@@ -73,48 +90,62 @@ export default function Garage() {
         {!account && <button className="glow-btn" onClick={connect}>Connect Wallet</button>}
       </div>
 
-      {car && (
-        <div className="showcase glass-card">
-          <div className="stats-col">
-            <StatBar label="Top Speed" value={car.topSpeed} />
-            <StatBar label="Acceleration" value={car.acceleration} />
-            <StatBar label="Handling" value={car.handling} />
-            <StatBar label="Brake" value={car.brake} />
-          </div>
-
-          <div className="car-hero">
-            <div className="car-name">{car.name}</div>
-            <div className="car-glow" />
-            <div className="car-emoji">🏎️</div>
-          </div>
-
-          <div className="buy-col">
-            {Number(car.price) === 0 ? (
-              <div className="badge live">STARTER — FREE</div>
-            ) : owned[selected] ? (
-              <div className="badge live">OWNED</div>
-            ) : (
-              <>
-                <div className="price-tag">{formatEther(car.price)} AVAX</div>
-                <button
-                  className="glow-btn"
-                  disabled={!account || busy}
-                  onClick={() => buyCar(selected, car.price)}
-                >
-                  {busy ? 'Processing…' : `Buy ${formatEther(car.price)} AVAX`}
-                </button>
-                <button
-                  className="glow-btn cyan"
-                  disabled={!account || busy}
-                  onClick={() => unlockWithRewards(selected)}
-                >
-                  Unlock with winnings
-                </button>
-              </>
-            )}
-          </div>
+      <div className="showcase glass-card">
+        <div className="stats-col">
+          {car ? (
+            <>
+              <StatBar label="Top Speed" value={car.topSpeed} />
+              <StatBar label="Acceleration" value={car.acceleration} />
+              <StatBar label="Handling" value={car.handling} />
+              <StatBar label="Brake" value={car.brake} />
+            </>
+          ) : (
+            <p className="stats-placeholder">Connect your wallet to load live car stats from the contract.</p>
+          )}
         </div>
-      )}
+
+        <div className="car-hero">
+          <div className="car-name">{car ? car.name : 'Starter Car'}</div>
+          <GarageViewer carIndex={selected} variant={selected % 2} height={280} />
+          <div className="drag-hint">drag to spin</div>
+        </div>
+
+        <div className="buy-col">
+          {!account ? (
+            <button className="glow-btn" onClick={connect}>Connect Wallet</button>
+          ) : !car ? (
+            <div className="badge">Loading…</div>
+          ) : Number(car.price) === 0 ? (
+            <div className="badge live">STARTER — FREE</div>
+          ) : owned[selected] ? (
+            <div className="badge live">OWNED</div>
+          ) : (
+            <>
+              <div className="price-tag">{formatEther(car.price)} AVAX</div>
+              <button
+                className="glow-btn"
+                disabled={busy}
+                onClick={() => buyCar(selected, car.price)}
+              >
+                {busy ? 'Processing…' : `Buy ${formatEther(car.price)} AVAX`}
+              </button>
+              <button
+                className="glow-btn cyan"
+                disabled={busy}
+                onClick={() => unlockWithRewards(selected)}
+              >
+                Unlock with winnings
+              </button>
+            </>
+          )}
+
+          {car && (Number(car.price) === 0 || owned[selected]) && (
+            <button className="glow-btn ghost equip-btn" disabled>
+              ✓ Equipped for racing
+            </button>
+          )}
+        </div>
+      </div>
 
       {status && <div className="status-line">{status}</div>}
 
@@ -125,10 +156,12 @@ export default function Garage() {
             <button
               key={i}
               className={'car-chip' + (i === selected ? ' active' : '')}
-              onClick={() => setSelected(i)}
+              onClick={() => isOwned && selectCar(i)}
+              disabled={!isOwned}
             >
-              <span className="chip-emoji">🚗</span>
+              <span className="chip-emoji" style={{ background: chipColor(i) }} />
               <span className="chip-name">{c.name}</span>
+              {isEquipped(i) && isOwned && <span className="chip-equipped">EQUIPPED</span>}
               {!isOwned && <span className="chip-lock">🔒 LOCKED</span>}
             </button>
           )
@@ -146,20 +179,21 @@ export default function Garage() {
         .stats-col { display: flex; flex-direction: column; gap: 16px; }
         .stat-row { display: flex; flex-direction: column; gap: 6px; }
         .stat-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-mid); letter-spacing: 0.06em; }
-        .car-hero { position: relative; display: grid; place-items: center; min-height: 200px; }
+        .car-hero { position: relative; display: flex; flex-direction: column; align-items: center; min-height: 200px; }
         .car-name {
-          position: absolute; top: -6px; font-family: var(--font-display);
+          font-family: var(--font-display);
           font-size: 18px; letter-spacing: 0.04em; color: var(--text-hi);
+          margin-bottom: 4px;
         }
-        .car-glow {
-          position: absolute; width: 220px; height: 90px; border-radius: 50%;
-          background: radial-gradient(closest-side, var(--magenta-soft), transparent 70%);
-          filter: blur(6px);
+        .drag-hint {
+          font-family: var(--font-mono); font-size: 10.5px; color: var(--text-low);
+          letter-spacing: 0.08em; text-transform: uppercase; margin-top: -6px;
         }
-        .car-emoji { font-size: 84px; filter: drop-shadow(0 12px 18px rgba(0,0,0,0.5)); }
+        .stats-placeholder { color: var(--text-low); font-size: 12.5px; line-height: 1.6; max-width: 22ch; }
         .buy-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
         @media (max-width: 760px) { .buy-col { align-items: center; } }
         .price-tag { font-family: var(--font-mono); color: var(--gold); font-size: 15px; }
+        .equip-btn { opacity: 0.8; cursor: default; }
         .status-line { margin-top: 14px; color: var(--cyan); font-size: 13.5px; font-family: var(--font-mono); }
         .car-strip {
           margin-top: 26px; display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;
@@ -171,13 +205,20 @@ export default function Garage() {
           display: flex; flex-direction: column; align-items: center; gap: 6px;
           color: var(--text-mid);
         }
+        .car-chip:disabled { cursor: not-allowed; opacity: 0.7; }
         .car-chip.active { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta) inset, 0 8px 20px var(--magenta-soft); color: var(--text-hi); }
-        .chip-emoji { font-size: 26px; }
+        .chip-emoji { width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
         .chip-name { font-size: 12px; font-weight: 600; text-align: center; }
+        .chip-equipped { font-family: var(--font-mono); font-size: 9px; color: var(--cyan); letter-spacing: 0.06em; }
         .chip-lock { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-low); }
       `}</style>
     </div>
   )
+}
+
+const PALETTE_HEX = ['#ff2ea6', '#17e8d5', '#8b5cf6', '#ffc857', '#ff5470', '#8bff57', '#e9edff', '#1a1726']
+function chipColor(i) {
+  return PALETTE_HEX[i % PALETTE_HEX.length]
 }
 
 function StatBar({ label, value }) {

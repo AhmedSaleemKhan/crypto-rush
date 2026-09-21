@@ -105,6 +105,16 @@ button {
   max-width: 1180px;
 }
 
+.route-loading {
+  padding: 80px 28px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--text-low);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
 /* ---------- Reusable pieces ---------- */
 
 .glass-card {

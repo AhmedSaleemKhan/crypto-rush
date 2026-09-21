@@ -3,11 +3,11 @@ import { useWeb3 } from '../context/Web3Context'
 
 const steps = [
   { n: '01', t: 'Connect Wallet', d: 'Link MetaMask and switch to Avalanche Fuji automatically.' },
-  { n: '02', t: 'Select Car', d: 'Pick a garage car — stats matter for bragging rights, not odds.' },
-  { n: '03', t: 'Join Race', d: 'Pay the entry fee on-chain to enter the current pool.' },
-  { n: '04', t: 'Winner Drawn', d: 'Once the pool fills, a winner is drawn from race entrants.' },
-  { n: '05', t: 'Claim Rewards', d: 'Winner earns the pot in AVAX, claimable any time.' },
-  { n: '06', t: 'Unlock Cars', d: 'Spend winnings straight from the garage to unlock new rides.' },
+  { n: '02', t: 'Pick Your Car', d: 'Spin a real 3D car in the garage — stats set your acceleration, top speed, and handling.' },
+  { n: '03', t: 'Join the Grid', d: 'Pay the entry fee on-chain to enter the current pool.' },
+  { n: '04', t: 'Drive the Race', d: 'Full 3D track, throttle/brake/steer, speed + RPM gauges, pause and stop whenever you like.' },
+  { n: '05', t: 'On-Chain Draw', d: 'The instant you start engines, the contract draws the real winner — no backend, fully verifiable.' },
+  { n: '06', t: 'Win & Cash Out', d: 'Winner’s prize lands in claimable rewards, ready to withdraw or spend on new cars.' },
 ]
 
 export default function Home() {
@@ -17,12 +17,14 @@ export default function Home() {
     <div className="page home">
       <section className="hero glass-card">
         <div className="hero-copy">
-          <div className="eyebrow">ON-CHAIN ARCADE RACING · AVALANCHE FUJI</div>
-          <h1>Every race is a transaction.<br />Every win pays out on-chain.</h1>
+          <div className="eyebrow">ON-CHAIN 3D ARCADE RACING · AVALANCHE FUJI</div>
+          <h1>Actually drive the race.<br />Actually win on-chain.</h1>
           <p className="hero-sub">
-            Crypto Rush is a fully on-chain racing pool. Pay the entry fee, join the grid,
-            and let the contract draw a winner. No backend, no custodian — just your
-            wallet and the Fuji testnet.
+            Crypto Rush is a full 3D racing game backed by a real on-chain prize pool.
+            Pick your car in the garage, join the grid, then drive it yourself — throttle,
+            brake, steering, speed and RPM gauges, pause and stop whenever you want. The
+            moment the race starts, the contract draws the real winner. No backend,
+            no custodian — just your wallet and the Fuji testnet.
           </p>
           <div className="hero-actions">
             {!account && <button className="glow-btn" onClick={connect}>Connect &amp; Play</button>}
