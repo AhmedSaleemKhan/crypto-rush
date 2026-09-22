@@ -2,7 +2,10 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import { BrowserProvider, Contract, formatEther } from 'ethers'
 import abi from '../contract/abi.json'
 
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS
+// Deployed CryptoRush.sol on Avalanche Fuji. VITE_CONTRACT_ADDRESS (e.g. set
+// in Vercel) overrides this if you redeploy a newer contract later.
+const DEPLOYED_CONTRACT_ADDRESS = '0x6dB85263d6038eF09B98efAE5b894673C31a8CB5'
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || DEPLOYED_CONTRACT_ADDRESS
 const CHAIN_ID_HEX = import.meta.env.VITE_CHAIN_ID_HEX || '0xa869' // 43113 Fuji
 const FUJI_RPC = import.meta.env.VITE_FUJI_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc'
 const EXPLORER_URL = import.meta.env.VITE_EXPLORER_URL || 'https://testnet.snowtrace.io'
