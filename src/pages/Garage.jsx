@@ -5,7 +5,7 @@ import GarageViewer from '../components/game/GarageViewer'
 import { getSelectedCarId, setSelectedCarId } from '../game/carSelection'
 
 export default function Garage() {
-  const { contract, account, connect, refreshBalance } = useWeb3()
+  const { contract, account, connect, refreshBalance, contractAddress } = useWeb3()
   const [cars, setCars] = useState([])
   const [owned, setOwned] = useState({})
   const [selected, setSelected] = useState(() => getSelectedCarId())
@@ -113,6 +113,8 @@ export default function Garage() {
         <div className="buy-col">
           {!account ? (
             <button className="glow-btn" onClick={connect}>Connect Wallet</button>
+          ) : !contractAddress ? (
+            <div className="badge warn">NO CONTRACT CONFIGURED</div>
           ) : !car ? (
             <div className="badge">Loading…</div>
           ) : Number(car.price) === 0 ? (

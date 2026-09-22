@@ -196,3 +196,9 @@ button {
   border-color: rgba(56, 240, 163, 0.4);
   background: rgba(56, 240, 163, 0.08);
 }
+
+.badge.warn {
+  color: var(--danger);
+  border-color: rgba(255, 84, 112, 0.4);
+  background: rgba(255, 84, 112, 0.08);
+}
